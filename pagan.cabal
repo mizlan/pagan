@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 22181044add769a9f2ce1af8396b5d0268ef07b3f73921ba8a434022122abf9c
+-- hash: 4388a8aef6d58911964284bb7b64f9f55f4bf608ced017c023c1be376da7ad14
 
 name:           pagan
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
     , directory
     , filepath
     , process
+    , text
     , time
   default-language: Haskell2010
 
@@ -53,6 +54,7 @@ executable pagan-exe
     , filepath
     , pagan
     , process
+    , text
     , time
   default-language: Haskell2010
 
@@ -70,5 +72,6 @@ test-suite pagan-test
     , filepath
     , pagan
     , process
+    , text
     , time
   default-language: Haskell2010
