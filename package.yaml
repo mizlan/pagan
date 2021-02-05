@@ -26,6 +26,7 @@ dependencies:
 - filepath
 - process
 - text
+- monad-loops
 
 library:
   source-dirs: src
