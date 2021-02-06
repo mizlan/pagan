@@ -1,8 +1,8 @@
 name:                pagan
 version:             0.1.0.0
-github:              "githubuser/pagan"
+github:              "mizlan/pagan"
 license:             BSD3
-author:              "Author name here"
+author:              "Michael Lan"
 maintainer:          "example@example.com"
 copyright:           "2021 Author name here"
 
@@ -30,6 +30,9 @@ dependencies:
 
 library:
   source-dirs: src
+  when:
+  - condition: false
+    other-modules: Paths_pagan
 
 executables:
   pagan-exe:
@@ -41,6 +44,9 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - pagan
+    when:
+    - condition: false
+      other-modules: Paths_pagan
 
 tests:
   pagan-test:
@@ -52,3 +58,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - pagan
+    when:
+    - condition: false
+      other-modules: Paths_pagan
