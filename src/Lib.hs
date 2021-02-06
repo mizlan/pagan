@@ -22,13 +22,14 @@ import           System.FilePath                ( (</>)
                                                 , takeFileName
                                                 , takeDirectory
                                                 )
+import           System.Process                 ( readCreateProcessWithExitCode
+                                                , shell
+                                                )
+import           System.Exit                    ( ExitCode(..) )
 
 type BuildCommand = String
 type RunCommand = String
 type Config = (String, Maybe BuildCommand, RunCommand)
-
-getOnlyFiles :: [FilePath] -> IO [FilePath]
-getOnlyFiles = filterM doesFileExist
 
 canonicalListDirectory :: FilePath -> IO [FilePath]
 canonicalListDirectory path = do
@@ -40,15 +41,6 @@ getMostRecentEntry = maximumOnM getModificationTime
 
 getConfigLanguage :: Config -> String
 getConfigLanguage (lang, _, _) = lang
-
-getConfigBuildCommand :: Config -> Maybe BuildCommand
-getConfigBuildCommand (_, cmd, _) = cmd
-
-getConfigRunCommand :: Config -> BuildCommand
-getConfigRunCommand (_, _, cmd) = cmd
-
-configEntrySupports :: Config -> FilePath -> Bool
-configEntrySupports config file = getConfigLanguage config `isExtensionOf` file
 
 isSupportedBy :: [Config] -> FilePath -> Bool
 isSupportedBy configs file =
@@ -72,7 +64,8 @@ getSupportedFiles configs = filter (isSupportedBy configs)
 
 -- |Gets a configuration from a filename
 findConfig :: FilePath -> [Config] -> Maybe Config
-findConfig file = find (`configEntrySupports` file)
+findConfig file =
+  find (\config -> getConfigLanguage config `isExtensionOf` file)
 
 getPureExtension :: FilePath -> String
 getPureExtension path = case takeExtension path of
@@ -94,9 +87,37 @@ interpolateCommand path command =
         replacements
 
 interpolateConfig :: FilePath -> Config -> Config
-interpolateConfig path (lang, buildCmd, runCmd) = (lang, interpolateCommand path <$> buildCmd, interpolateCommand path runCmd)
+interpolateConfig path (lang, buildCmd, runCmd) =
+  (lang, interpolateCommand path <$> buildCmd, interpolateCommand path runCmd)
 
 getConfig :: [Config] -> FilePath -> IO (Maybe Config)
 getConfig configs dir =
-  interpolate <$> (getMostRecentEntry =<< getOnlyFiles . getSupportedFiles configs =<< canonicalListDirectory dir)
-  where interpolate = (>>= \path -> interpolateConfig path <$> findConfig path configs)
+  interpolate
+    <$> (   getMostRecentEntry
+        =<< filterM doesFileExist
+        .   getSupportedFiles configs
+        =<< canonicalListDirectory dir
+        )
+ where
+  interpolate =
+    (>>= \path -> interpolateConfig path <$> findConfig path configs)
+
+runCommand :: String -> IO (ExitCode, String, String)
+runCommand cmd = readCreateProcessWithExitCode (shell cmd) ""
+
+executeConfig :: Config -> IO ()
+executeConfig (_, Nothing, run) = do
+  res <- runCommand run
+  case res of
+    (ExitSuccess, _, _) -> putStrLn "Success"
+    (ExitFailure _, _, _) -> putStrLn "Failure"
+executeConfig (_, Just build, run) = do
+  res <- runCommand run
+  case res of
+    (ExitSuccess, _, _) -> putStrLn "Success"
+    (ExitFailure _, _, _) -> putStrLn "Failure"
+
+{-
+getConfig returns IO (Maybe Config)
+executeConfig
+-}
