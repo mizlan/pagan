@@ -5,7 +5,7 @@ import           Control.Monad.Loops            ( maximumOnM )
 import           Data.List                      ( find
                                                 , foldl'
                                                 )
-import           Data.Text                     as T
+import qualified Data.Text                     as T
                                                 ( replace
                                                 , pack
                                                 , unpack
@@ -102,20 +102,30 @@ getConfig configs dir =
   interpolate =
     (>>= \path -> interpolateConfig path <$> findConfig path configs)
 
+getConfigUsingDefault :: FilePath -> IO (Maybe Config)
+getConfigUsingDefault = getConfig getDefaultConfigs
+
 runCommand :: String -> IO (ExitCode, String, String)
 runCommand cmd = readCreateProcessWithExitCode (shell cmd) ""
 
 executeConfig :: Config -> IO ()
 executeConfig (_, Nothing, run) = do
-  res <- runCommand run
-  case res of
-    (ExitSuccess, _, _) -> putStrLn "Success"
-    (ExitFailure _, _, _) -> putStrLn "Failure"
+  runRes <- runCommand run
+  case runRes of
+    (ExitSuccess  , _, _) -> putStrLn "Success"
+    (ExitFailure _, _, _) -> putStrLn "Runtime Failure"
 executeConfig (_, Just build, run) = do
-  res <- runCommand run
-  case res of
-    (ExitSuccess, _, _) -> putStrLn "Success"
-    (ExitFailure _, _, _) -> putStrLn "Failure"
+  buildRes <- runCommand build
+  case buildRes of
+    (ExitSuccess, _, _) -> do
+      putStrLn "Success"
+      runRes <- runCommand run
+      case runRes of
+        (ExitSuccess, _, _) -> do
+          putStrLn "Success"
+        (ExitFailure _, _, _) -> do
+          putStrLn "Runtime Failure"
+    (ExitFailure _, _, _) -> putStrLn "Buildtime Failure"
 
 {-
 getConfig returns IO (Maybe Config)
