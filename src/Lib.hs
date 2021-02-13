@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Lib where
 
 import           Control.Monad                  ( filterM )
@@ -10,6 +12,7 @@ import qualified Data.Text                     as T
                                                 , pack
                                                 , unpack
                                                 )
+import           Data.Foldable                  ( for_ )
 import           System.Directory               ( listDirectory
                                                 , doesFileExist
                                                 , getModificationTime
@@ -25,7 +28,9 @@ import           System.FilePath                ( (</>)
 import           System.Process                 ( readCreateProcessWithExitCode
                                                 , shell
                                                 )
-import           System.Exit                    ( ExitCode(..) )
+import           System.Exit                    ( ExitCode(..)
+                                                , die
+                                                )
 
 type BuildCommand = String
 type RunCommand = String
@@ -109,25 +114,10 @@ runCommand :: String -> IO (ExitCode, String, String)
 runCommand cmd = readCreateProcessWithExitCode (shell cmd) ""
 
 executeConfig :: Config -> IO ()
-executeConfig (_, Nothing, run) = do
-  runRes <- runCommand run
-  case runRes of
-    (ExitSuccess  , _, _) -> putStrLn "Success"
-    (ExitFailure _, _, _) -> putStrLn "Runtime Failure"
-executeConfig (_, Just build, run) = do
-  buildRes <- runCommand build
-  case buildRes of
-    (ExitSuccess, _, _) -> do
-      putStrLn "Success"
-      runRes <- runCommand run
-      case runRes of
-        (ExitSuccess, _, _) -> do
-          putStrLn "Success"
-        (ExitFailure _, _, _) -> do
-          putStrLn "Runtime Failure"
-    (ExitFailure _, _, _) -> putStrLn "Buildtime Failure"
-
-{-
-getConfig returns IO (Maybe Config)
-executeConfig
--}
+executeConfig (_, mbuild, run) = do
+  for_ mbuild $ \build -> runCommand build >>= \case
+    (ExitSuccess, _, _) -> putStrLn "Success"
+    _                   -> die "Buildtime failure"
+  runCommand run >>= \case
+    (ExitSuccess, _, _) -> putStrLn "Success"
+    _                   -> die "Runtime failure"
