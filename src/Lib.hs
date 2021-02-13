@@ -87,7 +87,9 @@ interpolateCommand path command =
         , ("$EXT" , getPureExtension)
         ]
   in  T.unpack $ foldl'
-        (\str (var, func) -> T.replace (T.pack var) (T.pack $ func path) str)
+        (\str (accum, extractElement) ->
+          T.replace (T.pack accum) (T.pack $ extractElement path) str
+        )
         (T.pack command)
         replacements
 
