@@ -2,7 +2,9 @@
 
 module Lib where
 
-import           Control.Monad                  ( filterM )
+import           Control.Monad                  ( filterM
+                                                , (>=>)
+                                                )
 import           Control.Monad.Loops            ( maximumOnM )
 import           Data.List                      ( find
                                                 , foldl'
@@ -117,9 +119,9 @@ runCommand cmd = readCreateProcessWithExitCode (shell cmd) ""
 
 executeConfig :: Config -> IO ()
 executeConfig (_, mbuild, run) = do
-  for_ mbuild $ \build -> runCommand build >>= \case
-    (ExitSuccess, _, _) -> putStrLn "Success"
-    _                   -> die "Buildtime failure"
+  for_ mbuild $ runCommand >=> \case
+    (ExitSuccess, stdout, _) -> putStrLn $ "Success" ++ stdout
+    (ExitFailure _, _, stderr) -> die $ show $ "build failure" ++ stderr
   runCommand run >>= \case
-    (ExitSuccess, _, _) -> putStrLn "Success"
-    _                   -> die "Runtime failure"
+    (ExitSuccess  , stdout, _     ) -> putStrLn $ "Success" ++ stdout
+    (ExitFailure _, _     , stderr) -> die $ show $ "run failure" ++ stderr
