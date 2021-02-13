@@ -101,12 +101,10 @@ interpolateConfig path (lang, buildCmd, runCmd) =
 
 getConfig :: [Config] -> FilePath -> IO (Maybe Config)
 getConfig configs dir =
-  interpolate
-    <$> (   getMostRecentEntry
-        =<< filterM doesFileExist
-        .   getSupportedFiles configs
-        =<< canonicalListDirectory dir
-        )
+  fmap interpolate
+    $   canonicalListDirectory dir
+    >>= (filterM doesFileExist . getSupportedFiles configs)
+    >>= getMostRecentEntry
  where
   interpolate =
     (>>= \path -> interpolateConfig path <$> findConfig path configs)
