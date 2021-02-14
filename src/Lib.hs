@@ -118,8 +118,8 @@ runCommand cmd = readCreateProcessWithExitCode (shell cmd) ""
 executeConfig :: Config -> IO ()
 executeConfig (_, mbuild, run) = do
   for_ mbuild $ runCommand >=> \case
-    (ExitSuccess  , stdout, _     ) -> putStrLn $ "Success" ++ stdout
+    (ExitSuccess  , stdout, _     ) -> putStrLn $ "success" ++ stdout
     (ExitFailure _, _     , stderr) -> die $ show $ "build failure" ++ stderr
   runCommand run >>= \case
-    (ExitSuccess  , stdout, _     ) -> putStrLn $ "Success" ++ stdout
+    (ExitSuccess  , stdout, _     ) -> putStrLn $ "success" ++ stdout
     (ExitFailure _, _     , stderr) -> die $ show $ "run failure" ++ stderr
