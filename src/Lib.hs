@@ -67,7 +67,7 @@ getDefaultConfigs =
   ]
 
 getSupportedFiles :: [Config] -> [FilePath] -> [FilePath]
-getSupportedFiles configs = filter (isSupportedBy configs)
+getSupportedFiles = filter . isSupportedBy
 
 -- |Gets a configuration from a filename
 findConfig :: FilePath -> [Config] -> Maybe Config
