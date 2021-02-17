@@ -64,6 +64,7 @@ getDefaultConfigs =
   , ("c"   , Just "gcc $FILE -o $BASE"     , "./$BASE")
   , ("ml"  , Just "ocamlopt str.cmxa $FILE", "./a.out")
   , ("jl"  , Nothing                       , "julia $FILE")
+  , ("clj" , Nothing                       , "clj -X $BASE/-main")
   ]
 
 getSupportedFiles :: [Config] -> [FilePath] -> [FilePath]
